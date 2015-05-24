@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>Leaflet: Open Street Map, Experiments</title>
+	<link rel="stylesheet" href="leaflet-0.7.3/leaflet.css" />
+	<script src="jquery-2.1.4.min.js"></script>
+	<script src="leaflet-0.7.3/leaflet.js"></script>
+</head>
+<body>
+	
+    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    
+    <script type="text/javascript">
+	
+	$(document).ready(function() {
+		// Overlay group
+		var poi = new L.LayerGroup();
+		
+		// OpenStreetMap baselayer
+		// create the tile layer with correct attribution
+		var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+		var osmAttrib='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+		var osm = new L.TileLayer(osmUrl, {minZoom: 1, maxZoom: 17, attribution: osmAttrib});
+
+		// Set up the map
+		// Start the map in Helsinki
+		var map = new L.Map('map', {
+			center: [60.14424, 24.98772],
+			zoom: 11,
+			layers: [osm, poi]
+		});
+
+		var baseLayers = {
+		    "OpenStreetMap": osm
+		};
+		
+		var overlays = {
+		    "Point of interests": poi
+		};
+			
+		// Marker for Suomenlinna
+		var marker1 = L.marker([60.14424, 24.98772]).addTo(poi);
+	
+		// Suomenlinna popup
+		marker1.bindPopup("<b>Suomenlinna</b><br>Inhabited sea fortress built on six islands (Kustaanmiekka, Susisaari, Iso-Mustasaari, Pikku-Mustasaari, Länsi-Mustasaari and Långören)");
+
+		//
+		// Use popups as layers
+		//
+		var popup = L.popup();
+		
+		// Dealing with events
+		function onMapClick(e) {
+		    popup
+		        .setLatLng(e.latlng)
+		        .setContent("Clicked at " + e.latlng.toString())
+		        .openOn(map);
+		}
+		
+		map.on('click', onMapClick);
+		
+		L.control.layers(baseLayers, overlays).addTo(map);
+				
+	});
+    </script>
+    
+</body>
+</html>

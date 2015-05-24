@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>Leaflet: Open Street Map, Experiments</title>
+	<link rel="stylesheet" href="leaflet-0.7.3/leaflet.css" />
+	<script src="jquery-2.1.4.min.js"></script>
+	<script src="leaflet-0.7.3/leaflet.js"></script>
+    <!-- Plugins -->
+    <script src="plugins/MousePosition/L.Control.MousePosition.js"></script>
+    <script src="plugins/zoomslider/L.Control.Zoomslider.js"></script>
+    <link rel="stylesheet" href="plugins/zoomslider/L.Control.Zoomslider.css" />
+    <script src="plugins/Pancontrol/L.Control.Pan.js"></script>
+    <link rel="stylesheet" href="plugins/Pancontrol/L.Control.Pan.css" />
+    <script src="plugins/draw/leaflet.draw.js"></script>
+    <link rel="stylesheet" href="plugins/draw/leaflet.draw.css" />
+    
+</head>
+<body>
+	
+    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    
+    <script type="text/javascript">
+	
+	$(document).ready(function() {
+        var mapPromise = createBaseLayer();
+        var map;
+        var layersControl;
+
+        mapPromise.done(function(value) {
+            console.log("Map initialized: " + value);
+            
+            // Doesn't work nicely with drawing
+            // createClickEvent();
+        
+            createMarkerOverlay();
+            
+            addMousePosition();
+            
+            createDrawFeature();
+        });
+	});
+        
+    function createBaseLayer() {
+        var deferred = $.Deferred();
+        
+        // OpenStreetMap baselayer
+		// create the tile layer with correct attribution
+		var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+		var osmAttrib='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+		var osm = new L.TileLayer(osmUrl, {minZoom: 1, maxZoom: 17, attribution: osmAttrib});
+
+		// Set up the map
+		// Start the map in Helsinki
+		map = new L.Map('map', {
+			center: [60.14424, 24.98772],
+			zoom: 11
+		});
+        
+        osm.addTo(map);
+        
+		var baseLayers = {
+		    "OpenStreetMap": osm
+		};
+
+		// Add layer control
+        layersControl = L.control.layers(baseLayers);
+        layersControl.addTo(map);
+        
+        return deferred.resolve("map ready");
+    }
+        
+    // https://github.com/Leaflet/Leaflet.draw
+    function createDrawFeature() {
+        // Initialise the FeatureGroup to store editable layers
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        // Initialise the draw control and pass it the FeatureGroup of editable layers
+        var drawControl = new L.Control.Draw({
+			position: 'topright',
+			draw: {
+				polyline: {
+					metric: true
+				},
+				polygon: false,
+                /*, {
+					allowIntersection: false,
+					showArea: true,
+					drawError: {
+						color: '#b00b00',
+						timeout: 1000
+					},
+					shapeOptions: {
+						color: '#bada55'
+					}
+				},*/
+				circle: false, /* {
+					shapeOptions: {
+						color: '#662d91'
+					}
+				},*/
+                rectangle: false,
+				marker: true
+			},
+			edit: {
+				featureGroup: drawnItems
+			}
+		});
+		map.addControl(drawControl);
+        
+        map.on('draw:created', function (e) {
+			var type = e.layerType,
+				layer = e.layer;
+            
+			if (type === 'marker') {                    
+				layer.bindPopup(layer.getLatLng().lat + " : " + layer.getLatLng().lng);
+			}
+
+			drawnItems.addLayer(layer);
+		});
+    }
+    
+    function createClickEvent() {
+		//
+		// Use popups as layers
+		//
+		var popup = L.popup();
+		
+		// Dealing with events
+		function onMapClick(e) {
+		    popup
+		        .setLatLng(e.latlng)
+		        .setContent("Clicked at " + e.latlng.toString())
+		        .openOn(map);
+		}
+		
+		map.on('click', onMapClick);    
+    }
+            
+    function createMarkerOverlay() {
+        // Overlay group
+		var poi = new L.LayerGroup();
+        poi.addTo(map);
+        
+		// Marker for Suomenlinna
+		var marker1 = L.marker([60.14424, 24.98772]).addTo(poi);
+	
+		// Suomenlinna popup
+		marker1.bindPopup("<b>Suomenlinna</b><br>Inhabited sea fortress built on six islands (Kustaanmiekka, Susisaari, Iso-Mustasaari, Pikku-Mustasaari, Länsi-Mustasaari and Långören)");
+        
+        //layersControl.addOverlay(overlays);
+        layersControl.addOverlay(poi , "Point of interests");
+    }
+        
+    function addMousePosition() {
+        L.control.mousePosition().addTo(map);
+    }
+    </script>
+    
+</body>
+</html>
